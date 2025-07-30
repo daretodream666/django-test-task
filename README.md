@@ -6,13 +6,13 @@
 
 1. Клонируйте репозиторий:
 
-   git clone https://github.com/your-username/your-repo.git
-   cd your-repo
+   git clone %repository_url%  
+   cd repository
 
 2. Создайте и активируйте виртуальное окружение:
 
-   python -m venv .venv
-   .venv\Scripts\activate  # для Windows
+   python -m venv .venv  
+   .venv\Scripts\activate  # для Windows  
    source .venv/bin/activate  # для Linux/macOS
 
 3. Установите зависимости:
