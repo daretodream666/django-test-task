@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Список записей{% endblock %}
+
+{% block content %}
+<h2>Фильтры</h2>
+<form method="get" class="row g-3 mb-4">
+    <div class="col-md-2">
+        <label for="date_from" class="form-label">Дата от:</label>
+        <input type="date" id="date_from" name="date_from" class="form-control" value="{{ filters.date_from }}">
+    </div>
+    <div class="col-md-2">
+        <label for="date_to" class="form-label">Дата до:</label>
+        <input type="date" id="date_to" name="date_to" class="form-control" value="{{ filters.date_to }}">
+    </div>
+    <div class="col-md-2">
+        <label for="type-select" class="form-label">Тип:</label>
+        <select id="type-select" name="type" class="form-select">
+            <option value="">Все</option>
+            {% for t in types %}
+                <option value="{{ t.id }}" {% if filters.type == t.id|stringformat:"s" %}selected{% endif %}>{{ t.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label for="category-select" class="form-label">Категория:</label>
+        <select id="category-select" name="category" class="form-select">
+            <option value="">Все</option>
+            {% for c in categories %}
+                <option value="{{ c.id }}" {% if filters.category == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label for="subcategory-select" class="form-label">Подкатегория:</label>
+        <select id="subcategory-select" name="subcategory" class="form-select">
+            <option value="">Все</option>
+            {% for s in subcategories %}
+                <option value="{{ s.id }}" {% if filters.subcategory == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label for="status-select" class="form-label">Статус:</label>
+        <select id="status-select" name="status" class="form-select">
+            <option value="">Все</option>
+            {% for s in statuses %}
+                <option value="{{ s.id }}" {% if filters.status == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">Применить</button>
+        <a href="{% url 'index' %}" class="btn btn-secondary">Сбросить</a>
+    </div>
+</form>
+
+<a href="{% url 'create_record' %}" class="btn btn-success my-3">Создать запись</a>
+
+<table class="table table-bordered table-striped">
+  <thead>
+    <tr>
+      <th>Дата</th>
+      <th>Статус</th>
+      <th>Тип</th>
+      <th>Категория</th>
+      <th>Подкатегория</th>
+      <th>Сумма</th>
+      <th>Комментарий</th>
+      <th>Действия</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for record in records %}
+    <tr>
+      <td>{{ record.date }}</td>
+      <td>{{ record.status.name }}</td>
+      <td>{{ record.type.name }}</td>
+      <td>{{ record.category.name }}</td>
+      <td>{{ record.subcategory.name }}</td>
+      <td>{{ record.amount }}</td>
+      <td>{{ record.comment }}</td>
+      <td>
+          <a href="{% url 'edit_record' record.pk %}" class="btn btn-sm btn-primary">Редактировать</a>
+          <form action="{% url 'delete_record' record.pk %}" method="post" style="display:inline-block;" onsubmit="return confirm('Вы уверены, что хотите удалить запись?');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-danger">Удалить</button>
+          </form>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="8" class="text-center">Нет записей</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $('#type-select').change(function() {
+        var typeId = $(this).val();
+        $('#category-select').html('<option value="" disabled selected>Загрузка...</option>');
+        $('#subcategory-select').html('<option value="" disabled selected>Все</option>');
+
+        $.ajax({
+            url: "{% url 'ajax_load_categories' %}",
+            data: {'type': typeId},
+            success: function(data) {
+                let options = '<option value="">Все</option>';
+                data.forEach(function(cat) {
+                    options += `<option value="${cat.id}">${cat.name}</option>`;
+                });
+                $('#category-select').html(options);
+            }
+        });
+    });
+
+    $('#category-select').change(function() {
+        var categoryId = $(this).val();
+        $('#subcategory-select').html('<option value="" disabled selected>Загрузка...</option>');
+
+        $.ajax({
+            url: "{% url 'ajax_load_subcategories' %}",
+            data: {'category': categoryId},
+            success: function(data) {
+                let options = '<option value="">Все</option>';
+                data.forEach(function(subcat) {
+                    options += `<option value="${subcat.id}">${subcat.name}</option>`;
+                });
+                $('#subcategory-select').html(options);
+            }
+        });
+    });
+
+</script>
+{% endblock %}

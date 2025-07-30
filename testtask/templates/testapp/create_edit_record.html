@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>{% if form.instance.pk %}Редактировать{% else %}Создать{% endif %} запись</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="container py-4">
+
+<h1>{% if form.instance.pk %}Редактировать{% else %}Создать{% endif %} запись</h1>
+
+<form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="mb-3">
+        {{ form.date.label_tag }}
+        {{ form.date }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.status.label_tag }}
+        {{ form.status }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.type.label_tag }}
+        {{ form.type }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.category.label_tag }}
+        {{ form.category }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.subcategory.label_tag }}
+        {{ form.subcategory }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.amount.label_tag }}
+        {{ form.amount }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.comment.label_tag }}
+        {{ form.comment }}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+    <a href="{% url 'index' %}" class="btn btn-secondary">Отмена</a>
+</form>
+
+<script>
+$(document).ready(function() {
+    function loadCategories(typeId, selectedCategoryId = null, selectedSubcatId = null) {
+        if (!typeId) {
+            $('#id_category').html('<option value="">---------</option>');
+            $('#id_subcategory').html('<option value="">---------</option>');
+            return;
+        }
+        $.ajax({
+            url: "{% url 'ajax_load_categories' %}",
+            data: {'type': typeId},
+            success: function(data) {
+                let catSelect = $('#id_category');
+                catSelect.empty();
+                catSelect.append('<option value="">---------</option>');
+                $.each(data, function(i, item) {
+                    let selected = (item.id == selectedCategoryId) ? ' selected' : '';
+                    catSelect.append('<option value="' + item.id + '"' + selected + '>' + item.name + '</option>');
+                });
+                if (selectedCategoryId) {
+                    loadSubcategories(selectedCategoryId, selectedSubcatId);
+                } else {
+                    $('#id_subcategory').html('<option value="">---------</option>');
+                }
+            }
+        });
+    }
+
+    function loadSubcategories(categoryId, selectedSubcatId = null) {
+        if (!categoryId) {
+            $('#id_subcategory').html('<option value="">---------</option>');
+            return;
+        }
+        $.ajax({
+            url: "{% url 'ajax_load_subcategories' %}",
+            data: {'category': categoryId},
+            success: function(data) {
+                let subcatSelect = $('#id_subcategory');
+                subcatSelect.empty();
+                subcatSelect.append('<option value="">---------</option>');
+                $.each(data, function(i, item) {
+                    let selected = (item.id == selectedSubcatId) ? ' selected' : '';
+                    subcatSelect.append('<option value="' + item.id + '"' + selected + '>' + item.name + '</option>');
+                });
+            }
+        });
+    }
+
+    $('#id_type').change(function() {
+        let typeId = $(this).val();
+        loadCategories(typeId);
+        $('#id_subcategory').html('<option value="">---------</option>');
+    });
+
+    $('#id_category').change(function() {
+        let categoryId = $(this).val();
+        loadSubcategories(categoryId);
+    });
+
+    let initialType = $('#id_type').val();
+    let initialCategory = "{{ form.instance.category.id|default:'' }}";
+    let initialSubcategory = "{{ form.instance.subcategory.id|default:'' }}";
+
+    if (initialType) {
+        loadCategories(initialType, initialCategory, initialSubcategory);
+    }
+});
+</script>
+
+
+</body>
+</html>
